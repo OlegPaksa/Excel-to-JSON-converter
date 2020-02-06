@@ -24,13 +24,11 @@
     <div class="container p-3 my-3 border">
         <input type="file" id="fileUpload" accept=".xls,.xlsx" />
         <div class="dropdown" id="dropdown">
-            <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown"
-                id="dropdownButton">Select a sheet</button>
+            <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" id="dropdownButton">Select a sheet</button>
             <div class="dropdown-menu" id="dropdownMenu"></div>
         </div>
         <div id="theGrid"></div>
-        <button type="button" class="btn btn-success" data-toggle="modal" data-target="#changeHeaders"
-            id="toggleModal">Next</button>
+        <button type="button" class="btn btn-success" data-toggle="modal" data-target="#changeHeaders" id="toggleModal">Next</button>
         <!-- The Modal -->
         <div class="modal fade" id="changeHeaders">
             <div class="modal-dialog modal-xl">
@@ -85,6 +83,10 @@
     let newNames = [];
 
     function onFileLoadedfunction(event) {
+        document.getElementById("theGrid").style.display = "block"
+        document.getElementById("toggleModal").style.display = "block"
+        document.getElementById("dropdownButton").style.display = "block"
+
         sheets = []
         sheetsCounter = 0
         var data = event.target.result;
@@ -170,6 +172,10 @@
         console.log(exportFile)
     }
 
+
+    document.getElementById("theGrid").style.display = "none"
+    document.getElementById("toggleModal").style.display = "none"
+    document.getElementById("dropdownButton").style.display = "none"
     //creates empty grids
     var theGrid = new wijmo.grid.FlexGrid('#theGrid', {
         itemsSource: []
