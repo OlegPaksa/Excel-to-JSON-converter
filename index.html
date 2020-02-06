@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+    <link href="https://cdn.grapecity.com/wijmo/5.20193.637/styles/wijmo.min.css" rel="stylesheet" />
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.15.3/xlsx.full.min.js"></script>
+    <script src="https://cdn.grapecity.com/wijmo/5.20193.637/controls/wijmo.min.js"></script>
+    <script src="https://cdn.grapecity.com/wijmo/5.20193.637/controls/wijmo.grid.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
+
+    <title>Excel Converter v3</title>
+
+</head>
+
+<body>
+    <div class="container p-3 my-3 border">
+        <h1>Excel Converter</h1>
+    </div>
+    <div class="container p-3 my-3 border">
+        <input type="file" id="fileUpload" accept=".xls,.xlsx" />
+        <div class="dropdown" id="dropdown">
+            <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown"
+                id="dropdownButton">Select a sheet</button>
+            <div class="dropdown-menu" id="dropdownMenu"></div>
+        </div>
+        <div id="theGrid"></div>
+        <button type="button" class="btn btn-success" data-toggle="modal" data-target="#changeHeaders"
+            id="toggleModal">Next</button>
+        <!-- The Modal -->
+        <div class="modal fade" id="changeHeaders">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+
+                    <!-- Modal Header -->
+                    <div class="modal-header">
+                        <h4 class="modal-title">Select headers you will be using</h4>
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    </div>
+
+                    <!-- Modal body -->
+                    <div class="modal-body">
+                        <div id="headers"></div>
+                    </div>
+
+                    <!-- Modal footer -->
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" id="saveButton">Save</button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+<style>
+    .wj-flexgrid {
+        height: 700px;
+        margin: 6px 0;
+    }
+
+    #fileUpload {
+        display: inline-block;
+        margin: 10px;
+    }
+
+    #dropdown {
+        display: inline-block;
+    }
+</style>
+<script>
+    console.log(wijmo.grid.FlexGrid, wijmo.grid)
+    var selectedFile;
+    const fileUploadInput = document.getElementById("fileUpload");
+    const convertButton = document.getElementById("uploadExcel");
+    const toggleModal = document.getElementById("toggleModal");
+    let sheets = [];
+    let sheetsCounter = 0;
+    let sheetNum = 0;
+    let newNames = [];
+
+    function onFileLoadedfunction(event) {
+        sheets = []
+        sheetsCounter = 0
+        var data = event.target.result;
+        let workbook = XLSX.read(data, { type: "binary" });
+        for (const sheet of workbook.SheetNames) {
+            let rowObject = XLSX.utils.sheet_to_row_object_array(workbook.Sheets[sheet]);
+            sheets[sheetsCounter] = rowObject;
+            sheetsCounter++;
+        };
+
+        populateDropdown(workbook)
+
+        refreshGrid(workbook.SheetNames[sheetNum], theGrid)
+    }
+
+    function refreshGrid(sheetName, gridName) {
+        gridName.itemsSource = sheets[sheetNum];
+        gridName.collectionView.refresh();
+        document.getElementById("dropdownButton").innerText = sheetName
+    }
+
+    function populateDropdown(workbook) {
+
+        const list = document.getElementById("dropdownMenu");
+        while (list.hasChildNodes()) {
+            list.removeChild(list.childNodes[0]);
+        }
+        for (let i = 0; i < sheetsCounter; i++) {
+            const opt = workbook.SheetNames[i]
+            const link = document.createElement("a");
+            link.classList.add("dropdown-item");
+            link.setAttribute("id", "dropdownItem" + i);
+            link.setAttribute("href", "javascript:setSheetNum('" + opt + "','" + i + "')");
+            const text = document.createTextNode(opt);
+            link.appendChild(text);
+            list.appendChild(link);
+
+        }
+    }
+
+    function setSheetNum(sheetName, sheet) {
+        console.log("yes", sheetName);
+        sheetNum = sheet;
+        refreshGrid(sheetName, theGrid);
+    }
+
+    function onConvertClicked() {
+        selectedFile = event.target.files[0];
+        var fileReader = new FileReader();
+        fileReader.onload = onFileLoadedfunction;
+        fileReader.readAsBinaryString(selectedFile);
+    }
+
+    function modalToggled() {
+
+        let displayHeaders = [];
+        let counter = 0;
+        let rowdata = sheets[sheetNum];
+        for (let headerName of Object.keys(rowdata[0])) {
+            displayHeaders[counter] = { headerName: headerName, targetHeaderName: headerName, include: true };
+            counter++;
+        }
+
+        headersGrid.itemsSource = displayHeaders;
+
+        document.getElementById("saveButton").addEventListener("click", saveInfo)
+    }
+
+    function saveInfo() {
+
+        const exportFile = [];
+        for (let i = 0; i < sheets[sheetNum].length; i++) {
+            const newRow = {};
+            const exportFileRow = sheets[sheetNum][i];
+
+            for (const headerRow of headersGrid.itemsSource) {
+                if (headerRow.include) {
+                    newRow[headerRow.targetHeaderName] = exportFileRow[headerRow.headerName];
+                }
+
+            }
+            exportFile[i] = newRow
+        }
+        console.log(exportFile)
+    }
+
+    //creates empty grids
+    var theGrid = new wijmo.grid.FlexGrid('#theGrid', {
+        itemsSource: []
+    });
+    var headersGrid = new wijmo.grid.FlexGrid('#headers', {
+        itemsSource: []
+    });
+    fileUploadInput.addEventListener("change", onConvertClicked);
+    toggleModal.addEventListener("click", modalToggled)
+</script>
+
+</html>
