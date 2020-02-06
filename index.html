@@ -72,7 +72,6 @@
     }
 </style>
 <script>
-    console.log(wijmo.grid.FlexGrid, wijmo.grid)
     var selectedFile;
     const fileUploadInput = document.getElementById("fileUpload");
     const convertButton = document.getElementById("uploadExcel");
@@ -127,7 +126,6 @@
     }
 
     function setSheetNum(sheetName, sheet) {
-        console.log("yes", sheetName);
         sheetNum = sheet;
         refreshGrid(sheetName, theGrid);
     }
@@ -169,6 +167,7 @@
             }
             exportFile[i] = newRow
         }
+        console.log("This is the JSON file with all your selected changes:")
         console.log(exportFile)
     }
 
